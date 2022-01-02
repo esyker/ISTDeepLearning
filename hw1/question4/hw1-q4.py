@@ -67,6 +67,25 @@ class FeedforwardNetwork(nn.Module):
         """
         super().__init__()
         # Implement me!
+        activations = {
+            "tanh": nn.Tanh(),
+            "relu": nn.ReLU()}
+        activation = activations[activation_type]
+
+        dropout = nn.Dropout(dropout)
+        
+        hidden_size = [hidden_size]
+        
+        in_sizes = [n_features] + hidden_size
+        out_sizes = hidden_size + [n_classes]
+
+        self.feedforward = nn.Sequential(*[
+            nn.Sequential(
+                nn.Linear(in_size, out_size),
+                activation,
+                dropout)
+            for in_size, out_size in zip(in_sizes[:-1], out_sizes[:-1])],
+            nn.Linear(in_sizes[-1], out_sizes[-1]))
 
     def forward(self, x, **kwargs):
         """
@@ -76,7 +95,7 @@ class FeedforwardNetwork(nn.Module):
         the output logits from x. This will include using various hidden
         layers, pointwise nonlinear functions, and dropout.
         """
-        raise NotImplementedError
+        return self.feedforward(x)
 
 
 def train_batch(X, y, model, optimizer, criterion, **kwargs):
