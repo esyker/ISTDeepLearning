@@ -21,16 +21,13 @@ def solve_analytically(X, y):
     """
     #If A is full rank, x=AT(AAT)−1b is an exact solution where Ax=b and it also has minimal ∥x∥.
     #https://math.stackexchange.com/questions/1745101/least-squares-with-singular-aat
-    w, _, _, _ = np.linalg.lstsq(X,y,rcond=None)
-    w=w/w[-1]
-    return w
-    """
-    u, sigma, vt = np.linalg.svd(X)
-    print(sigma.T.dot(sigma))
+    """u, sigma, vt = np.linalg.svd(X)
     sigma_plus = (sigma.T.dot(sigma)).dot(sigma.T)
     svd_pseudo_inverse= vt.T.dot(sigma_plus).dot(u.T)
     return svd_pseudo_inverse.dot(y)
-    """
+    """    
+    return np.linalg.pinv(X).dot(y)
+    
     
 
 
@@ -100,6 +97,7 @@ class NeuralRegression(_RegressionModel):
         self.W = [W1, W2]
         self.B= [b1,b2]
         self.relu = lambda x : np.maximum(0, x)
+        self.relu_derivative = lambda h : np.greater(h, 0).astype(int)
 
 
     def update_weight(self, x_i, y_i, learning_rate=0.001):
@@ -164,7 +162,7 @@ class NeuralRegression(_RegressionModel):
             grad_h = self.W[i].T.dot(grad_z)
             # Gradient of hidden layer below before activation.
             assert(g == self.relu)
-            grad_z = grad_h # Grad of loss wrt z3. only valid if relu function used
+            grad_z = grad_h *self.relu_derivative(z)# Grad of loss wrt z3. only valid if relu function used
         grad_weights.reverse()
         grad_biases.reverse()
         return grad_weights, grad_biases
