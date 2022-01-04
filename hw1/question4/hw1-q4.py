@@ -66,26 +66,24 @@ class FeedforwardNetwork(nn.Module):
         includes modules for several activation functions and dropout as well.
         """
         super().__init__()
-        # Implement me!
-        activations = {
-            "tanh": nn.Tanh(),
-            "relu": nn.ReLU()}
-        activation = activations[activation_type]
-
-        dropout = nn.Dropout(dropout)
+        if(activation_type=="tanh"):
+            self.activation = nn.Tanh()
+        elif(activation_type=="relu"):
+            self.activation=nn.ReLU()
+        else:
+            raise Exception("Invalid activation function")
+            
+        self.dropout = nn.Dropout(dropout)
         
-        hidden_size = [hidden_size]
-        
-        in_sizes = [n_features] + hidden_size
-        out_sizes = hidden_size + [n_classes]
-
         self.feedforward = nn.Sequential(*[
             nn.Sequential(
-                nn.Linear(in_size, out_size),
-                activation,
-                dropout)
-            for in_size, out_size in zip(in_sizes[:-1], out_sizes[:-1])],
-            nn.Linear(in_sizes[-1], out_sizes[-1]))
+                nn.Linear(n_features, hidden_size),
+                    self.activation,
+                    self.dropout),
+            nn.Sequential(nn.Linear(hidden_size, n_classes),
+                          self.activation,
+                          self.dropout)])
+            
 
     def forward(self, x, **kwargs):
         """
@@ -117,8 +115,8 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     loss as a numerical value that is not part of the computation graph.
     """
     optimizer.zero_grad()
-    out = model(X, **kwargs)
-    loss = criterion(out, y)
+    yhat = model(X, **kwargs)
+    loss = criterion(yhat, y)
     loss.backward()
     optimizer.step()
     return loss.item()
@@ -149,7 +147,7 @@ def plot(epochs, plottable, ylabel='', name=''):
     plt.xlabel('Epoch')
     plt.ylabel(ylabel)
     plt.plot(epochs, plottable)
-    plt.savefig('%s.pdf' % (name), bbox_inches='tight')
+    plt.savefig('%s.png' % (name), bbox_inches='tight')
 
 
 def main():
@@ -228,8 +226,9 @@ def main():
 
     print('Final Test acc: %.4f' % (evaluate(model, test_X, test_y)))
     # plot
-    plot(epochs, train_mean_losses, ylabel='Loss', name='training-loss')
-    plot(epochs, valid_accs, ylabel='Accuracy', name='validation-accuracy')
+    plot_name ="lr_"+str(opt.learning_rate)+"hs_"+ str(opt.hidden_sizes)+"act_"+opt.activation+"opt_"+opt.optimizer+"drop_"+str(opt.dropout)+"layers_"+str(opt.layers)
+    plot(epochs, train_mean_losses, ylabel='Loss', name='training-loss'+plot_name)
+    plot(epochs, valid_accs, ylabel='Accuracy', name='validation-accuracy'+plot_name)
 
 
 if __name__ == '__main__':
