@@ -128,8 +128,9 @@ class MLP(object):
         self.W = [W1, W2]
         self.B= [b1, b2]
         
-        #Define the Relu Function
+        #Define the Relu Function and its derivative
         self.relu = lambda x : np.maximum(0, x)
+        self.relu_derivative = lambda h : np.greater(h, 0).astype(int)
         
     def update_weight(self, x_i, y_i, learning_rate=0.001):
         """
@@ -214,15 +215,13 @@ class MLP(object):
         
         num_layers = len(self.W)
         g = self.relu
-        output, hiddens = self.forward(x_i)
+        z, hiddens = self.forward(x_i)
         
         grad_weights = []
         grad_biases = []
         
-        enc_y_i = hot_encode(y_i, 10) #!!!!Change later to make it correspond to n_classes, have to pass it!!! 
-        grad_z = softmax(output) - enc_y_i  # Grad of loss wrt last z.
-        #print(softmax(output))
-
+        enc_y_i = hot_encode(y_i, 10) #10 is the number of classes
+        grad_z = softmax(z) - enc_y_i  # Grad of loss wrt last z.
         
         for i in range(num_layers-1, -1, -1):
             
@@ -236,7 +235,8 @@ class MLP(object):
             
             # Gradient of hidden layer below before activation.
             assert(g == self.relu)
-            grad_z = grad_h # Grad of loss wrt z3. only valid if relu function used
+            grad_z = grad_h * self.relu_derivative(h)# Grad of loss wrt z3. only valid if relu function used
+            #For the ReLU function derivating the z or the h for the same layer l will give the same result
             
         grad_weights.reverse()
         grad_biases.reverse()
