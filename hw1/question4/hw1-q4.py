@@ -29,7 +29,7 @@ class LogisticRegression(nn.Module):
         super().__init__()
         # In a pytorch module, the declarations of layers needs to come after
         # the super __init__ line, otherwise the magic doesn't work.
-        self.linear = nn.Linear(n_features, n_classes)
+        self.logistic = nn.Linear(n_features, n_classes)
 
     def forward(self, x, **kwargs):
         """
@@ -45,7 +45,7 @@ class LogisticRegression(nn.Module):
         forward pass -- this is enough for it to figure out how to do the
         backward pass.
         """
-        return self.linear(x)
+        return self.logistic(x)
 
 
 # Q3.2
@@ -66,6 +66,7 @@ class FeedforwardNetwork(nn.Module):
         includes modules for several activation functions and dropout as well.
         """
         super().__init__()
+        
         if(activation_type=="tanh"):
             self.activation = nn.Tanh()
         elif(activation_type=="relu"):
@@ -75,15 +76,13 @@ class FeedforwardNetwork(nn.Module):
             
         self.dropout = nn.Dropout(dropout)
         
-        self.feedforward = nn.Sequential(*[
-            nn.Sequential(
-                nn.Linear(n_features, hidden_size),
-                    self.activation,
-                    self.dropout),
-            nn.Sequential(nn.Linear(hidden_size, n_classes),
-                          self.activation,
-                          self.dropout)])
-            
+        self.layers = []
+        self.layers.append(nn.Sequential(nn.Linear(n_features, hidden_size),self.activation,self.dropout))#input layer
+        for i in range(layers-1):
+            self.layers.append(nn.Sequential(nn.Linear(hidden_size, hidden_size),self.activation,self.dropout))#hidden layers
+        self.layers.append(nn.Linear(hidden_size,n_classes))#output layer
+        
+        self.feedforward = nn.Sequential(*self.layers)
 
     def forward(self, x, **kwargs):
         """
@@ -180,7 +179,7 @@ def main():
 
     dev_X, dev_y = dataset.dev_X, dataset.dev_y
     test_X, test_y = dataset.test_X, dataset.test_y
-
+    
     n_classes = torch.unique(dataset.y).shape[0]  # 10
     n_feats = dataset.X.shape[1]
 

@@ -187,65 +187,65 @@ def plot_dist_from_analytic(epochs, dist):
     plt.show()
 
 
-#def main():
-parser = argparse.ArgumentParser()
-parser.add_argument('model', choices=['linear_regression', 'nn'],
-                    help="Which model should the script run?")
-parser.add_argument('-epochs', default=150, type=int,
-                    help="""Number of epochs to train for. You should not
-                    need to change this value for your plots.""")
-parser.add_argument('-hidden_size', type=int, default=150)
-parser.add_argument('-learning_rate', type=float, default=0.001)
-opt = parser.parse_args()
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('model', choices=['linear_regression', 'nn'],
+                        help="Which model should the script run?")
+    parser.add_argument('-epochs', default=150, type=int,
+                        help="""Number of epochs to train for. You should not
+                        need to change this value for your plots.""")
+    parser.add_argument('-hidden_size', type=int, default=150)
+    parser.add_argument('-learning_rate', type=float, default=0.001)
+    opt = parser.parse_args()
 
-utils.configure_seed(seed=42)
+    utils.configure_seed(seed=42)
 
-add_bias = opt.model != 'nn'
-data = utils.load_regression_data(bias=add_bias)
-train_X, train_y = data["train"]
-test_X, test_y = data["test"]
+    add_bias = opt.model != 'nn'
+    data = utils.load_regression_data(bias=add_bias)
+    train_X, train_y = data["train"]
+    test_X, test_y = data["test"]
 
-n_points, n_feats = train_X.shape
+    n_points, n_feats = train_X.shape
 
-# Linear regression has an exact, analytic solution. Implement it in
-# the solve_analytically function defined above.
-if opt.model == "linear_regression":
-    analytic_solution = solve_analytically(train_X, train_y)
-else:
-    analytic_solution = None
+    # Linear regression has an exact, analytic solution. Implement it in
+    # the solve_analytically function defined above.
+    if opt.model == "linear_regression":
+        analytic_solution = solve_analytically(train_X, train_y)
+    else:
+        analytic_solution = None
 
-# initialize the model
-if opt.model == "linear_regression":
-    model = LinearRegression(n_feats)
-else:
-    model = NeuralRegression(n_feats, opt.hidden_size)
+    # initialize the model
+    if opt.model == "linear_regression":
+        model = LinearRegression(n_feats)
+    else:
+        model = NeuralRegression(n_feats, opt.hidden_size)
 
-# training loop
-epochs = np.arange(1, opt.epochs + 1)
-train_losses = []
-test_losses = []
-dist_opt = []
-for epoch in epochs:
-    print('Epoch %i... ' % epoch)
-    train_order = np.random.permutation(train_X.shape[0])
-    train_X = train_X[train_order]
-    train_y = train_y[train_order]
-    model.train_epoch(train_X, train_y, learning_rate=opt.learning_rate)
+    # training loop
+    epochs = np.arange(1, opt.epochs + 1)
+    train_losses = []
+    test_losses = []
+    dist_opt = []
+    for epoch in epochs:
+        print('Epoch %i... ' % epoch)
+        train_order = np.random.permutation(train_X.shape[0])
+        train_X = train_X[train_order]
+        train_y = train_y[train_order]
+        model.train_epoch(train_X, train_y, learning_rate=opt.learning_rate)
 
-    # Evaluate on the train and test data.
-    train_losses.append(model.evaluate(train_X, train_y))
-    test_losses.append(model.evaluate(test_X, test_y))
+        # Evaluate on the train and test data.
+        train_losses.append(model.evaluate(train_X, train_y))
+        test_losses.append(model.evaluate(test_X, test_y))
 
+        if analytic_solution is not None:
+            model_params = model.w
+            dist_opt.append(distance(analytic_solution, model_params))
+
+        print('Loss (train): %.3f | Loss (test): %.3f' % (train_losses[-1], test_losses[-1]))
+
+    plot(epochs, train_losses, test_losses)
     if analytic_solution is not None:
-        model_params = model.w
-        dist_opt.append(distance(analytic_solution, model_params))
-
-    print('Loss (train): %.3f | Loss (test): %.3f' % (train_losses[-1], test_losses[-1]))
-
-plot(epochs, train_losses, test_losses)
-if analytic_solution is not None:
-    plot_dist_from_analytic(epochs, dist_opt)
+        plot_dist_from_analytic(epochs, dist_opt)
 
 
-#if __name__ == '__main__':
-#    main()
+if __name__ == '__main__':
+    main()
