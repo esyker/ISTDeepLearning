@@ -19,18 +19,9 @@ def solve_analytically(X, y):
     This function should return a vector of size n_features (the same size as
     the weight vector in the LinearRegression class).
     """
-    #If A is full rank, x=AT(AAT)−1b is an exact solution where Ax=b and it also has minimal ∥x∥.
-    #https://math.stackexchange.com/questions/1745101/least-squares-with-singular-aat
-    """u, sigma, vt = np.linalg.svd(X)
-    sigma_plus = (sigma.T.dot(sigma)).dot(sigma.T)
-    svd_pseudo_inverse= vt.T.dot(sigma_plus).dot(u.T)
-    return svd_pseudo_inverse.dot(y)
-    """    
+    #the pseudo-inverse provides the optimal solution to the least-squares problem.
     return np.linalg.pinv(X).dot(y)
     
-    
-
-
 class _RegressionModel:
     """
     Base class that allows evaluation code to be shared between the
@@ -162,7 +153,7 @@ class NeuralRegression(_RegressionModel):
             grad_h = self.W[i].T.dot(grad_z)
             # Gradient of hidden layer below before activation.
             assert(g == self.relu)
-            grad_z = grad_h *self.relu_derivative(z)# Grad of loss wrt z3. only valid if relu function used
+            grad_z = grad_h *self.relu_derivative(h)# Grad of loss wrt z3. only valid if relu function used
         grad_weights.reverse()
         grad_biases.reverse()
         return grad_weights, grad_biases
