@@ -26,7 +26,22 @@ class CNN(nn.Module):
         https://pytorch.org/docs/stable/nn.html
         """
         super(CNN).__init__()
-        # Implement me!
+        if(activation_type=="tanh"):
+            self.activation = nn.Tanh()
+        elif(activation_type=="relu"):
+            self.activation=nn.ReLU()
+        else:
+            raise Exception("Invalid activation function")
+            
+        self.dropout = nn.Dropout(dropout)
+        
+        self.layers = []
+        self.layers.append(nn.Sequential(nn.Linear(n_features, hidden_size),self.activation,self.dropout))#input layer
+        for i in range(layers-1):
+            self.layers.append(nn.Sequential(nn.Linear(hidden_size, hidden_size),self.activation,self.dropout))#hidden layers
+        self.layers.append(nn.Linear(hidden_size,n_classes))#output layer
+        
+        self.feedforward = nn.Sequential(*self.layers)
         
     def forward(self, x):
         """
@@ -44,7 +59,7 @@ class CNN(nn.Module):
         forward pass -- this is enough for it to figure out how to do the
         backward pass.
         """
-        raise NotImplementedError
+        return self.feedforward(x)
         
 
 def train_batch(X, y, model, optimizer, criterion, **kwargs):
@@ -65,7 +80,12 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     This function should return the loss (tip: call loss.item()) to get the
     loss as a numerical value that is not part of the computation graph.
     """
-    raise NotImplementedError
+    optimizer.zero_grad()
+    yhat = model(X, **kwargs)
+    loss = criterion(yhat, y)
+    loss.backward()
+    optimizer.step()
+    return loss.item()
 
 
 def predict(model, X):
