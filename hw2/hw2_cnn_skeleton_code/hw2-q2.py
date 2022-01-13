@@ -25,22 +25,55 @@ class CNN(nn.Module):
         idea of how to us pytorch for this have a look at
         https://pytorch.org/docs/stable/nn.html
         """
-        super(CNN).__init__()
-        if(activation_type=="tanh"):
-            self.activation = nn.Tanh()
-        elif(activation_type=="relu"):
-            self.activation=nn.ReLU()
-        else:
-            raise Exception("Invalid activation function")
-            
-        self.dropout = nn.Dropout(dropout)
+        """
+        • A first block comprising (order as provided):
+        – A convolution layer with 16 output channels, a kernel of size 3x3, stride of 1, and
+        padding chosen to preserve the original image size.
+        – A rectified linear unit activation function.
+        – A max pooling with kernel size 2x2 and stride of 2.
         
+        
+        • A second block comprising (order as provided):
+        – A convolution layer with 32 output channels, a kernel of size 3x3, stride of 1, and
+        padding of zero.
+        – A rectified linear unit activation function.
+        – A max pooling with kernel size 2x2 and stride of 2.
+        • An affine transformation with 600 output features (to determine the number of input
+        features use the number of channels, width and height of the output of the second block.
+        Hint: The number of input features = number of output channels × output width ×
+        output height).
+        • A dropout layer with a dropout probability of your choice.
+        • An affine transformation with 120 output features.
+        • An affine transformation with the number of classes followed by an output LogSoftmax
+        layer.
+        Hint: use the functions nn.Sequential, nn.Conv2d and nn.MaxPool2d.
+        """
+        super(CNN,self).__init__()
         self.layers = []
-        self.layers.append(nn.Sequential(nn.Linear(n_features, hidden_size),self.activation,self.dropout))#input layer
-        for i in range(layers-1):
-            self.layers.append(nn.Sequential(nn.Linear(hidden_size, hidden_size),self.activation,self.dropout))#hidden layers
-        self.layers.append(nn.Linear(hidden_size,n_classes))#output layer
-        
+        """
+        1st block
+        """
+        #Unflatten to batch-channel-height-width
+        self.layers.append(nn.Unflatten(1, torch.Size((1,28,28))))
+        #input size 28 (28X28 images)
+        #padding to maintain size = (F-1)/2 = (3-1)/2=1
+        self.layers.append(nn.Sequential(nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1),nn.ReLU()))
+        #output size formula = ((W-K+2*P)/S)+1   W:input_size K:kernel_size P:padding S:stride
+        #output size (28 -3 + 2*1)/1 +1 = 28
+        self.layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
+        #output size = 28/2 = 14
+        """
+        2nd block
+        """
+        self.layers.append(nn.Sequential(nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=0),nn.ReLU()))
+        #output size (14 -3 + 2*0)/1 +1 = 12
+        self.layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
+        #output size = 12/2 = 6
+        self.layers.append(nn.Flatten())
+        #input features = number of output channels × output width ×output height)=16*6*6
+        self.layers.append(nn.Sequential(nn.Linear(1152, 600),nn.Dropout(0.3)))
+        self.layers.append(nn.Linear(600, 120))
+        self.layers.append(nn.Sequential(nn.Linear(120, 10),nn.LogSoftmax()))
         self.feedforward = nn.Sequential(*self.layers)
         
     def forward(self, x):
