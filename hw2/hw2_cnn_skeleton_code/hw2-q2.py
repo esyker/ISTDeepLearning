@@ -49,32 +49,31 @@ class CNN(nn.Module):
         Hint: use the functions nn.Sequential, nn.Conv2d and nn.MaxPool2d.
         """
         super(CNN,self).__init__()
-        self.layers = []
-        """
-        1st block
-        """
-        #Unflatten to batch-channel-height-width
-        self.layers.append(nn.Unflatten(1, torch.Size((1,28,28))))
+
+        self.convblock1 = nn.Sequential(nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1),
+                                        nn.ReLU(),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
         #input size 28 (28X28 images)
-        #padding to maintain size = (F-1)/2 = (3-1)/2=1
-        self.layers.append(nn.Sequential(nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1),nn.ReLU()))
+        #padding to maintain size = (kernel_size-1)/2 = (3-1)/2=1
+        #Convolution size
         #output size formula = ((W-K+2*P)/S)+1   W:input_size K:kernel_size P:padding S:stride
         #output size (28 -3 + 2*1)/1 +1 = 28
-        self.layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
+        #Max pool size
         #output size = 28/2 = 14
-        """
-        2nd block
-        """
-        self.layers.append(nn.Sequential(nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=0),nn.ReLU()))
+        
+        self.convblock2 = nn.Sequential(nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=0),
+                                        nn.ReLU(),
+                                        nn.MaxPool2d(kernel_size=2, stride=2))
+
         #output size (14 -3 + 2*0)/1 +1 = 12
-        self.layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
         #output size = 12/2 = 6
-        self.layers.append(nn.Flatten())
-        #input features = number of output channels × output width ×output height)=16*6*6
-        self.layers.append(nn.Sequential(nn.Linear(1152, 600),nn.Dropout(0.3)))
-        self.layers.append(nn.Linear(600, 120))
-        self.layers.append(nn.Sequential(nn.Linear(120, 10),nn.LogSoftmax()))
-        self.feedforward = nn.Sequential(*self.layers)
+        
+        self.linear_layers = nn.Sequential(nn.Flatten(),
+                                           nn.Linear(1152, 600),nn.ReLU(),nn.Dropout(0.3),
+                                           nn.Linear(600, 120),nn.ReLU(),
+                                           nn.Linear(120, 10),nn.LogSoftmax())
+
+        self.feedforward = nn.Sequential(self.convblock1,self.convblock2,self.linear_layers)
         
     def forward(self, x):
         """
