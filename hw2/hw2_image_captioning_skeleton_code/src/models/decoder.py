@@ -42,7 +42,10 @@ class Decoder(nn.Module):
 
     def forward(self, word, decoder_hidden_state, decoder_cell_state, encoder_out=None):
         # encoder_out is not used in this forward pass, it's just necessary for the model DecoderWithAttention
-
-        #TODO: your code here
+        
+        emb = self.embedding(word)
+        (decoder_hidden_state, decoder_cell_state) = self.decode_step(emb, (decoder_hidden_state, decoder_cell_state))
+        output = self.dropout(decoder_hidden_state) 
+        scores = self.fc(output)
 
         return scores, decoder_hidden_state, decoder_cell_state
