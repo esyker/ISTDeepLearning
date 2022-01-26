@@ -4,7 +4,6 @@ import torch
 class Attention(nn.Module):
 
     def __init__(self, encoder_dim, decoder_dim, attention_dim):
-
         super(Attention, self).__init__()
         # linear layer to transform encoded image
         self.encoder_att = nn.Linear(encoder_dim, attention_dim)
@@ -18,11 +17,12 @@ class Attention(nn.Module):
 
     def forward(self, encoder_out, decoder_hidden):
         encoded = self.encoder_att(encoder_out)
-        decoder = self.decoder_att(decoder_hidden)
+        decoded = self.decoder_att(decoder_hidden)
+        decoded = decoded.repeat(1,1,3)
         #print(encoded.shape)
         #print(decoded.shape)
         #scores =self.relu(torch.cat((encoded,decoded),dim=2)
-        scores = self.relu(self.encoder_att+self.decoder_att)
+        scores = self.relu(encoded+decoded)
         attention = self.full_att(scores)
         attention_weighted_encoding=self.softmax(attention)
         return attention_weighted_encoding
@@ -87,8 +87,9 @@ class DecoderWithAttention(nn.Module):
 
     def forward(self, word, decoder_hidden_state, decoder_cell_state, encoder_out):
         emb = self.embedding(word)
-        decoder_input=torch.cat((decoder_hidden_state,encoder_out),dim=2)
-        (decoder_hidden_state, decoder_cell_state) = self.decode_step(emb, (decoder_hidden_state, decoder_cell_state))
+        emb_att = torch.cat(emb,self.attention(word))
+        #decoder_input=torch.cat((decoder_hidden_state,encoder_out),dim=2)
+        (decoder_hidden_state, decoder_cell_state) = self.decode_step(emb_att, (decoder_hidden_state, decoder_cell_state))
         output = self.dropout(decoder_hidden_state) 
         scores = self.fc(output)
         return scores, decoder_hidden_state, decoder_cell_state
