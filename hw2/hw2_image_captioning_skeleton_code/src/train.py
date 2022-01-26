@@ -124,6 +124,7 @@ def val_step(decoder, encoder_out, all_captions, vocab_size, token_to_id, id_to_
     return bleu_4,generated_tokens
 
 def plot(plottable, ylabel='', name=''):
+    plt.figure()
     plt.xlabel('Epoch')
     plt.ylabel(ylabel)
     plt.plot(plottable)

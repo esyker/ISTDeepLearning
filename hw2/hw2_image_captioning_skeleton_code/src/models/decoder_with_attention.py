@@ -17,9 +17,14 @@ class Attention(nn.Module):
         self.softmax = nn.Softmax(dim=1)  # softmax layer to calculate weights
 
     def forward(self, encoder_out, decoder_hidden):
-
-        #TODO: your code here
-
+        encoded = self.encoder_att(encoder_out)
+        decoder = self.decoder_att(decoder_hidden)
+        #print(encoded.shape)
+        #print(decoded.shape)
+        #scores =self.relu(torch.cat((encoded,decoded),dim=2)
+        scores = self.relu(self.encoder_att+self.decoder_att)
+        attention = self.full_att(scores)
+        attention_weighted_encoding=self.softmax(attention)
         return attention_weighted_encoding
 
 
@@ -81,6 +86,10 @@ class DecoderWithAttention(nn.Module):
         return h, c
 
     def forward(self, word, decoder_hidden_state, decoder_cell_state, encoder_out):
-        #TODO: your code here
-
+        emb = self.embedding(word)
+        decoder_input=torch.cat((decoder_hidden_state,encoder_out),dim=2)
+        (decoder_hidden_state, decoder_cell_state) = self.decode_step(emb, (decoder_hidden_state, decoder_cell_state))
+        output = self.dropout(decoder_hidden_state) 
+        scores = self.fc(output)
         return scores, decoder_hidden_state, decoder_cell_state
+
