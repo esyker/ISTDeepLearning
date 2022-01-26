@@ -18,9 +18,9 @@ class Attention(nn.Module):
     def forward(self, encoder_out, decoder_hidden):
         encoded = self.encoder_att(encoder_out)
         decoded = self.decoder_att(decoder_hidden)
-        decoded = decoded.repeat(1,1,3)
-        #print(encoded.shape)
-        #print(decoded.shape)
+        decoded = decoded.repeat(8,32,1)
+        print(encoded.shape)
+        print(decoded.shape)
         #scores =self.relu(torch.cat((encoded,decoded),dim=2)
         scores = self.relu(encoded+decoded)
         attention = self.full_att(scores)
@@ -87,7 +87,11 @@ class DecoderWithAttention(nn.Module):
 
     def forward(self, word, decoder_hidden_state, decoder_cell_state, encoder_out):
         emb = self.embedding(word)
-        emb_att = torch.cat(emb,self.attention(word))
+        att = self.attention(encoder_out,decoder_hidden_state)
+        emb = emb.repeat(1,1,1)
+        print(emb.shape)
+        print(att.shape)
+        emb_att = torch.cat((emb,att))
         #decoder_input=torch.cat((decoder_hidden_state,encoder_out),dim=2)
         (decoder_hidden_state, decoder_cell_state) = self.decode_step(emb_att, (decoder_hidden_state, decoder_cell_state))
         output = self.dropout(decoder_hidden_state) 
