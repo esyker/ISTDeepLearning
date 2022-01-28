@@ -21,7 +21,7 @@ class Attention(nn.Module):
         encoded = self.encoder_att(encoder_out)
         src_len = encoded.shape[1]
         decoded = self.decoder_att(decoder_hidden).unsqueeze(1).repeat(1, src_len, 1)
-        #print(decoded)		
+        #print(decoded)
         #print(encoded.size())
         #print(decoded.size())
         

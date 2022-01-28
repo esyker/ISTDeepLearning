@@ -4,7 +4,6 @@ import torch
 class Attention(nn.Module):
 
     def __init__(self, encoder_dim, decoder_dim, attention_dim):
-
         super(Attention, self).__init__()
         # linear layer to transform encoded image
         self.encoder_att = nn.Linear(encoder_dim, attention_dim)
@@ -17,10 +16,15 @@ class Attention(nn.Module):
         self.softmax = nn.Softmax(dim=1)  # softmax layer to calculate weights
 
     def forward(self, encoder_out, decoder_hidden):
-        att1 = self.encoder_att(encoder_out)
-        att2 = self.decoder_att(decoder_hidden).unsqueeze(1)
-        att = self.full_att(self.relu(att1+att2)).squeeze(2)
-        attention_weighted_encoding= self.softmax(att).unsqueeze(2)*encoder_out
+        encoded = self.encoder_att(encoder_out)
+        decoded = self.decoder_att(decoder_hidden)
+        decoded = decoded.repeat(8,32,1)
+        print(encoded.shape)
+        print(decoded.shape)
+        #scores =self.relu(torch.cat((encoded,decoded),dim=2)
+        scores = self.relu(encoded+decoded)
+        attention = self.full_att(scores)
+        attention_weighted_encoding=self.softmax(attention)
         return attention_weighted_encoding
 
 
@@ -82,12 +86,15 @@ class DecoderWithAttention(nn.Module):
         return h, c
 
     def forward(self, word, decoder_hidden_state, decoder_cell_state, encoder_out):
-	
         emb = self.embedding(word)
-        att_vec = self.attention(encoder_out, decoder_hidden_state)
-        att_vec = att_vec.sum(dim=1)
-        (decoder_hidden_state, decoder_cell_state) = self.decode_step( torch.cat((emb, att_vec), dim = 1), (decoder_hidden_state, decoder_cell_state))
+        att = self.attention(encoder_out,decoder_hidden_state)
+        emb = emb.repeat(1,1,1)
+        print(emb.shape)
+        print(att.shape)
+        emb_att = torch.cat((emb,att))
+        #decoder_input=torch.cat((decoder_hidden_state,encoder_out),dim=2)
+        (decoder_hidden_state, decoder_cell_state) = self.decode_step(emb_att, (decoder_hidden_state, decoder_cell_state))
         output = self.dropout(decoder_hidden_state) 
         scores = self.fc(output)
-
         return scores, decoder_hidden_state, decoder_cell_state
+
