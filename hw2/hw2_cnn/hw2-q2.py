@@ -141,6 +141,7 @@ def evaluate(model, X, y):
 
 
 def plot(epochs, plottable, ylabel='', name=''):
+    plt.figure()
     plt.clf()
     plt.xlabel('Epoch')
     plt.ylabel(ylabel)
@@ -158,7 +159,7 @@ def plot_kernels(convolutional_layer_1, convolutional_layer_2, name_1='', name_2
     # change ordering as matplotlib expects data as (H, W, C)
     plt.clf()
     plt.imshow(filter_img_l1.permute(1, 2, 0))
-    plt.savefig('%s.pdf' % (name_1), bbox_inches='tight')
+    plt.savefig('%s.png' % (name_1), bbox_inches='tight')
 
     kernels_l2 = convolutional_layer_2.weight.detach().clone()
 
@@ -169,7 +170,7 @@ def plot_kernels(convolutional_layer_1, convolutional_layer_2, name_1='', name_2
     # change ordering as matplotlib expects data as (H, W, C)
     plt.clf()
     plt.imshow(filter_img_l2.permute(1, 2, 0))
-    plt.savefig('%s.pdf' % (name_2), bbox_inches='tight')
+    plt.savefig('%s.png' % (name_2), bbox_inches='tight')
 
 
 def main():
